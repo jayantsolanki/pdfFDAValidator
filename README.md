@@ -31,7 +31,7 @@ A powerful Python tool for batch processing PDF files with automated optimizatio
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd pdf-batch-processor
+cd pdfFDAValidator
 ```
 
 2. **Create virtual environment**
@@ -112,7 +112,7 @@ For each PDF file, the processor:
 ## Project Structure
 
 ```
-pdf-batch-processor/
+pdfFDAValidator/
 ├── pdf_batch_processor.py   # Main script
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # This file
