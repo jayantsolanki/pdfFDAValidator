@@ -62,6 +62,9 @@ test_pdfs/
 sample_pdfs/
 *.pdf
 
+# Reports
+**/processing_report_*.csv
+
 # Logs
 *.log
 
