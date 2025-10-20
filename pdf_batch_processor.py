@@ -1,10 +1,10 @@
 import os
-import sys
 from pathlib import Path
 import pikepdf
 from pikepdf import Pdf, Dictionary, Name
 import csv
 from datetime import datetime
+import argparse
 
 def get_pdf_properties(pdf_path):
     """
@@ -106,9 +106,15 @@ def create_comparison_report(report_data, output_dir):
     
     return report_path
 
-def collapse_child_bookmarks(outline_item):
+def collapse_child_bookmarks(outline_item, current_level=1, visible_levels=1):
     """
-    Recursively collapse all child bookmarks (set Count to negative).
+    Recursively collapse child bookmarks based on visible_levels parameter.
+
+    Args:
+        outline_item: The bookmark item to process
+        current_level: The current depth level (1-based)
+        visible_levels: Number of levels to keep visible (1 = only top level, 2 = top + first children, etc.)
+                       0 = expand all levels
     """
     try:
         if '/First' in outline_item:  # Has children
@@ -117,31 +123,47 @@ def collapse_child_bookmarks(outline_item):
             child = outline_item.First
             while child:
                 count += 1
-                # Recursively collapse children's children
-                collapse_child_bookmarks(child)
+                # Recursively process children's children
+                collapse_child_bookmarks(child, current_level + 1, visible_levels)
                 child = child.Next if '/Next' in child else None
-            
-            # Set Count to negative to collapse
+
+            # Collapse if we've exceeded visible_levels (0 means expand all)
             if count > 0:
-                outline_item.Count = -count
+                if visible_levels == 0:
+                    # Expand all - set positive count
+                    outline_item.Count = count
+                elif current_level >= visible_levels:
+                    # Collapse - set negative count
+                    outline_item.Count = -count
+                else:
+                    # Keep expanded - set positive count
+                    outline_item.Count = count
     except Exception as e:
         # Silently continue if there's an issue with a specific bookmark
         pass
 
-def process_bookmarks(pdf):
+def process_bookmarks(pdf, visible_levels=1):
     """
-    Process bookmarks to keep only parent bookmarks visible (collapse children).
+    Process bookmarks to control visibility at different levels.
+
+    Args:
+        pdf: The PDF object
+        visible_levels: Number of bookmark levels to keep visible
+                       0 = expand all levels
+                       1 = only top-level visible (default)
+                       2 = top-level + first children visible
+                       3+ = deeper levels visible
     """
     try:
         if '/Outlines' in pdf.Root and pdf.Root.Outlines:
             outlines = pdf.Root.Outlines
-            
+
             if '/First' in outlines:
                 # Process each top-level bookmark
                 current = outlines.First
                 while current:
-                    # Collapse children of this parent bookmark
-                    collapse_child_bookmarks(current)
+                    # Process children of this parent bookmark with level control
+                    collapse_child_bookmarks(current, current_level=1, visible_levels=visible_levels)
                     if '/Next' in current:
                         current = current.Next
                     else:
@@ -184,7 +206,7 @@ def remove_metadata(pdf):
             except:
                 pass
 
-def process_pdf(input_path, output_path):
+def process_pdf(input_path, output_path, bookmark_levels=1):
     """
     Process a single PDF file with the specified settings:
     1. Enable fast web viewing (linearization)
@@ -192,27 +214,33 @@ def process_pdf(input_path, output_path):
     3. Set Page Layout and Magnification to Default
     4. Remove tagged PDF structure
     5. Remove metadata
-    6. Collapse child bookmarks (keep only parent bookmarks expanded)
+    6. Collapse child bookmarks based on visible_levels parameter
+
+    Args:
+        input_path: Path to input PDF file
+        output_path: Path to output PDF file
+        bookmark_levels: Number of bookmark levels to keep visible (default=1)
+                        0 = expand all, 1 = only top-level, 2 = top + first children, etc.
     """
     try:
         # Open the PDF
         pdf = Pdf.open(input_path)
-        
+
         # Create or update the ViewerPreferences dictionary
         if '/ViewerPreferences' not in pdf.Root:
             pdf.Root.ViewerPreferences = Dictionary()
-        
+
         # Check if bookmarks exist
-        has_bookmarks = ('/Outlines' in pdf.Root and 
-                        pdf.Root.Outlines and 
+        has_bookmarks = ('/Outlines' in pdf.Root and
+                        pdf.Root.Outlines and
                         '/First' in pdf.Root.Outlines)
-        
+
         # Set the catalog (Root) properties
         # PageMode: UseOutlines if bookmarks exist, UseNone if no bookmarks (Page Only)
         if has_bookmarks:
             pdf.Root.PageMode = Name.UseOutlines  # Bookmarks Panel and Page
-            # Process bookmarks to collapse children
-            process_bookmarks(pdf)
+            # Process bookmarks with specified level visibility
+            process_bookmarks(pdf, visible_levels=bookmark_levels)
         else:
             pdf.Root.PageMode = Name.UseNone  # Page Only
         
@@ -250,10 +278,14 @@ def process_pdf(input_path, output_path):
     except Exception as e:
         return False, str(e)
 
-def process_pdf_batch(root_path):
+def process_pdf_batch(root_path, bookmark_levels=1):
     """
     Process all PDF files in the given directory and its subdirectories.
     Creates a 'processed' subfolder in each directory containing PDFs.
+
+    Args:
+        root_path: Path to the root directory containing PDFs
+        bookmark_levels: Number of bookmark levels to keep visible (default=1)
     """
     root_path = Path(root_path)
     
@@ -304,7 +336,7 @@ def process_pdf_batch(root_path):
         output_file = output_dir / pdf_file.name
         
         # Process the PDF
-        success, message = process_pdf(pdf_file, output_file)
+        success, message = process_pdf(pdf_file, output_file, bookmark_levels)
         
         if success:
             print(f"  ✓ Saved to: {output_file.relative_to(root_path)}")
@@ -335,7 +367,7 @@ def process_pdf_batch(root_path):
         # Use the first processed folder as report location
         report_dir = pdf_files[0].parent / "processed"
         report_path = create_comparison_report(report_data, report_dir)
-        print(f"\n📊 Comparison report generated: {report_path.relative_to(root_path)}\n")
+        print(f"\n Comparison report generated: {report_path.relative_to(root_path)}\n")
     
     # Summary
     print("="*60)
@@ -347,15 +379,61 @@ def process_pdf_batch(root_path):
 
 def main():
     """Main entry point for the script."""
-    if len(sys.argv) < 2:
-        print("Usage: python pdf_batch_processor.py <path_to_folder>")
-        print("\nExample:")
-        print("  python pdf_batch_processor.py /path/to/pdf/folder")
-        print("  python pdf_batch_processor.py C:\\Users\\Documents\\PDFs")
-        sys.exit(1)
-    
-    folder_path = sys.argv[1]
-    process_pdf_batch(folder_path)
+    parser = argparse.ArgumentParser(
+        description='Batch process PDF files with metadata removal and bookmark management.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  # Process PDFs with default settings (only top-level bookmarks visible)
+  python pdf_batch_processor.py /path/to/pdf/folder
+
+  # Expand all bookmark levels
+  python pdf_batch_processor.py /path/to/pdf/folder --bookmark-levels 0
+
+  # Keep top-level and first children visible
+  python pdf_batch_processor.py /path/to/pdf/folder --bookmark-levels 2
+
+  # Keep three levels of bookmarks visible
+  python pdf_batch_processor.py /path/to/pdf/folder --bookmark-levels 3
+
+Bookmark Levels:
+  0 = Expand all bookmark levels
+  1 = Only top-level bookmarks visible (default)
+  2 = Top-level + first children visible
+  3+ = Keep specified number of levels visible
+        '''
+    )
+
+    parser.add_argument(
+        'folder_path',
+        help='Path to the folder containing PDF files to process'
+    )
+
+    parser.add_argument(
+        '-b', '--bookmark-levels',
+        type=int,
+        default=1,
+        metavar='N',
+        help='Number of bookmark levels to keep visible (0=all, 1=top only, 2=top+children, etc.). Default: 1'
+    )
+
+    args = parser.parse_args()
+
+    # Validate bookmark levels
+    if args.bookmark_levels < 0:
+        parser.error("bookmark-levels must be 0 or greater")
+
+    print(f"PDF Batch Processor")
+    print(f"Bookmark visibility: ", end="")
+    if args.bookmark_levels == 0:
+        print("All levels expanded")
+    elif args.bookmark_levels == 1:
+        print("Only top-level visible")
+    else:
+        print(f"{args.bookmark_levels} levels visible")
+    print()
+
+    process_pdf_batch(args.folder_path, bookmark_levels=args.bookmark_levels)
 
 if __name__ == "__main__":
     main()

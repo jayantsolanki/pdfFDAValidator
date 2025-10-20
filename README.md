@@ -9,7 +9,7 @@ A powerful Python tool for batch processing PDF files with automated optimizatio
 - ✅ **Bookmarks Panel** - Sets initial view to show bookmarks automatically
 - ✅ **Default Layout** - Standardizes page layout and magnification
 - ✅ **Metadata Removal** - Completely removes all metadata (title, author, keywords, etc.)
-- ✅ **Bookmark Management** - Keeps parent bookmarks visible, collapses children
+- ✅ **Bookmark Management** - Configurable bookmark visibility levels (expand all, top-level only, or custom depth)
 - ✅ **Remove Tagging** - Strips PDF accessibility structure
 
 ### Operational Features
@@ -60,16 +60,45 @@ pip install -r requirements.txt
 python pdf_batch_processor.py /path/to/pdf/folder
 ```
 
+### Command-Line Options
+
+```bash
+python pdf_batch_processor.py <folder_path> [options]
+
+Options:
+  -b, --bookmark-levels N    Number of bookmark levels to keep visible
+                            0 = Expand all bookmark levels
+                            1 = Only top-level bookmarks visible (default)
+                            2 = Top-level + first children visible
+                            3+ = Keep specified number of levels visible
+
+  -h, --help                Show help message and exit
+```
+
 ### Examples
 
 **Windows:**
 ```bash
+# Process with default settings (top-level bookmarks only)
 python pdf_batch_processor.py C:\Users\Documents\PDFs
+
+# Expand all bookmark levels
+python pdf_batch_processor.py C:\Users\Documents\PDFs --bookmark-levels 0
+
+# Keep top-level and first children visible
+python pdf_batch_processor.py C:\Users\Documents\PDFs -b 2
 ```
 
 **macOS/Linux:**
 ```bash
+# Process with default settings (top-level bookmarks only)
 python pdf_batch_processor.py /home/user/documents/pdfs
+
+# Expand all bookmark levels
+python pdf_batch_processor.py /home/user/documents/pdfs --bookmark-levels 0
+
+# Keep three levels of bookmarks visible
+python pdf_batch_processor.py /home/user/documents/pdfs -b 3
 ```
 
 ### Output Structure
@@ -81,6 +110,29 @@ your_folder/
     ├── document1.pdf (processed)
     └── document2.pdf (processed)
 ```
+
+### Bookmark Levels Explained
+
+The `--bookmark-levels` option controls how many levels of bookmarks are visible when the PDF is opened:
+
+- **Level 0**: All bookmarks are expanded (entire bookmark tree visible)
+- **Level 1** (default): Only top-level bookmarks are visible, all children are collapsed
+- **Level 2**: Top-level bookmarks AND their immediate children are visible, deeper levels are collapsed
+- **Level 3+**: The specified number of levels are visible from the top
+
+**Example bookmark structure:**
+```
+Chapter 1                    ← Level 1
+├── Section 1.1             ← Level 2
+│   ├── Subsection 1.1.1   ← Level 3
+│   └── Subsection 1.1.2   ← Level 3
+└── Section 1.2             ← Level 2
+Chapter 2                    ← Level 1
+```
+
+With `--bookmark-levels 1`: Only "Chapter 1" and "Chapter 2" are visible
+With `--bookmark-levels 2`: "Chapter 1", "Section 1.1", "Section 1.2", and "Chapter 2" are visible
+With `--bookmark-levels 0`: All bookmarks are expanded and visible
 
 ## What It Does
 
@@ -94,7 +146,7 @@ For each PDF file, the processor:
    - Creator, Producer
    - Creation Date, Modification Date
    - XMP metadata streams
-5. **Collapses child bookmarks** (keeps parents visible)
+5. **Manages bookmark visibility** (configurable levels: expand all, top-level only, or custom depth)
 6. **Removes tagged PDF structure**
 
 ## Use Cases
