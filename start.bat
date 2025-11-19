@@ -15,14 +15,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Check if docker-compose is installed
-docker-compose --version >nul 2>&1
+REM Detect which docker compose command to use
+set DOCKER_COMPOSE=docker compose
+docker compose version >nul 2>&1
 if errorlevel 1 (
-    echo Error: docker-compose is not installed
-    echo Please install docker-compose or use Docker Desktop which includes it
-    pause
-    exit /b 1
+    docker-compose --version >nul 2>&1
+    if errorlevel 1 (
+        echo Error: Docker Compose is not installed
+        echo Please install Docker Desktop which includes Docker Compose
+        pause
+        exit /b 1
+    )
+    set DOCKER_COMPOSE=docker-compose
 )
+
+echo Using: %DOCKER_COMPOSE%
+echo.
 
 REM Create .env file if it doesn't exist
 if not exist .env (
@@ -34,7 +42,7 @@ if not exist .env (
 
 REM Start the application
 echo Starting the application...
-docker-compose up -d
+%DOCKER_COMPOSE% up -d
 
 REM Wait a moment for services to start
 timeout /t 3 /nobreak >nul
@@ -42,7 +50,7 @@ timeout /t 3 /nobreak >nul
 REM Check if services are running
 echo.
 echo Checking service status...
-docker-compose ps
+%DOCKER_COMPOSE% ps
 
 echo.
 echo ======================================
@@ -52,8 +60,8 @@ echo.
 echo Frontend: http://localhost
 echo Backend API: http://localhost:5000
 echo.
-echo To view logs: docker-compose logs -f
-echo To stop: docker-compose down
-echo To stop and remove data: docker-compose down -v
+echo To view logs: %DOCKER_COMPOSE% logs -f
+echo To stop: %DOCKER_COMPOSE% down
+echo To stop and remove data: %DOCKER_COMPOSE% down -v
 echo.
 pause

@@ -7,7 +7,7 @@
 **Error:**
 ```
 docker: command not found
-docker-compose: command not found
+docker compose: command not found
 ```
 
 **Solution:**
@@ -91,9 +91,9 @@ docker system prune -a  # Clean up unused images/containers
 
 **Rebuild from scratch:**
 ```bash
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
 ```
 
 **Check network connectivity:**
@@ -134,7 +134,7 @@ healthcheck failed
 
 **Use the simple version without healthchecks:**
 ```bash
-docker-compose -f docker-compose.simple.yml up -d
+docker compose -f docker-compose.simple.yml up -d
 ```
 
 **Or manually check services:**
@@ -214,8 +214,8 @@ sudo chmod -R 777 /var/lib/docker/volumes/pdfFDAValidator_pdf_uploads
 
 **Or recreate volumes:**
 ```bash
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ### 10. Network Issues
@@ -231,7 +231,7 @@ backend: connection refused
 **Recreate network:**
 ```bash
 docker network rm pdf-processor-network
-docker-compose up -d
+docker compose up -d
 ```
 
 **Check network connectivity:**
@@ -245,18 +245,18 @@ docker network inspect pdf-processor-network
 ### Check Status
 ```bash
 # View running containers
-docker-compose ps
+docker compose ps
 
 # View all containers (including stopped)
 docker ps -a
 
 # View logs
-docker-compose logs
-docker-compose logs backend
-docker-compose logs frontend
+docker compose logs
+docker compose logs backend
+docker compose logs frontend
 
 # Follow logs in real-time
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Test Services
@@ -294,20 +294,20 @@ If nothing works, try a complete reset:
 
 ```bash
 # Stop all containers
-docker-compose down
+docker compose down
 
 # Remove all volumes (WARNING: deletes all data)
-docker-compose down -v
+docker compose down -v
 
 # Remove all images
-docker-compose down --rmi all
+docker compose down --rmi all
 
 # Clean Docker system
 docker system prune -a --volumes
 
 # Rebuild and start fresh
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Manual Testing
@@ -339,7 +339,7 @@ Visit: http://localhost:3000
 ### Method 1: Use Simple Docker Compose (No Healthchecks)
 
 ```bash
-docker-compose -f docker-compose.simple.yml up -d
+docker compose -f docker-compose.simple.yml up -d
 ```
 
 ### Method 2: Run Without Docker
@@ -398,20 +398,20 @@ When asking for help, provide:
 
 1. **Error message:**
 ```bash
-docker-compose logs > error.log
+docker compose logs > error.log
 ```
 
 2. **System information:**
 ```bash
 docker --version
-docker-compose --version
+docker compose --version
 uname -a  # Linux/Mac
 systeminfo  # Windows
 ```
 
 3. **Container status:**
 ```bash
-docker-compose ps
+docker compose ps
 docker ps -a
 ```
 
@@ -429,8 +429,8 @@ docker system df
 | "command not found" | Install Docker/Docker Compose |
 | "permission denied" | Add user to docker group (Linux) |
 | "no space left on device" | Run `docker system prune -a` |
-| "network not found" | Run `docker-compose down && docker-compose up -d` |
-| "build failed" | Run `docker-compose build --no-cache` |
+| "network not found" | Run `docker compose down && docker compose up -d` |
+| "build failed" | Run `docker compose build --no-cache` |
 | "cannot connect to daemon" | Start Docker service/Desktop |
 | "unhealthy" | Use docker-compose.simple.yml |
 
@@ -438,6 +438,6 @@ docker system df
 
 If you continue to experience issues, please provide:
 - Full error message
-- Output of `docker-compose logs`
+- Output of `docker compose logs`
 - Your operating system and Docker version
 - What you were trying to do when the error occurred

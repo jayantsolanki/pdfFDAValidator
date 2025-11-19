@@ -14,12 +14,20 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check if docker-compose is installed
-if ! command -v docker-compose &> /dev/null; then
-    echo "Error: docker-compose is not installed"
-    echo "Please install docker-compose from https://docs.docker.com/compose/install/"
-    exit 1
+# Detect which docker compose command to use
+DOCKER_COMPOSE="docker compose"
+if ! docker compose version &> /dev/null; then
+    if command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE="docker-compose"
+    else
+        echo "Error: Docker Compose is not installed"
+        echo "Please install Docker Compose from https://docs.docker.com/compose/install/"
+        exit 1
+    fi
 fi
+
+echo "Using: $DOCKER_COMPOSE"
+echo ""
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
@@ -31,7 +39,7 @@ fi
 
 # Start the application
 echo "Starting the application..."
-docker-compose up -d
+$DOCKER_COMPOSE up -d
 
 # Wait a moment for services to start
 sleep 3
@@ -39,7 +47,7 @@ sleep 3
 # Check if services are running
 echo ""
 echo "Checking service status..."
-docker-compose ps
+$DOCKER_COMPOSE ps
 
 echo ""
 echo "======================================"
@@ -49,7 +57,7 @@ echo ""
 echo "Frontend: http://localhost"
 echo "Backend API: http://localhost:5000"
 echo ""
-echo "To view logs: docker-compose logs -f"
-echo "To stop: docker-compose down"
-echo "To stop and remove data: docker-compose down -v"
+echo "To view logs: $DOCKER_COMPOSE logs -f"
+echo "To stop: $DOCKER_COMPOSE down"
+echo "To stop and remove data: $DOCKER_COMPOSE down -v"
 echo ""

@@ -305,7 +305,7 @@ Content-Type: application/json
 start.bat
 
 # Or manually
-docker-compose up -d
+docker compose up -d
 ```
 
 **Access:**
@@ -614,14 +614,14 @@ curl -b cookies.txt -c cookies.txt \
 **1. Container fails to start**
 ```bash
 # Check logs
-docker-compose logs backend
-docker-compose logs frontend
+docker compose logs backend
+docker compose logs frontend
 
 # Restart services
-docker-compose restart
+docker compose restart
 
 # Rebuild containers
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 **2. Cannot upload files**
@@ -636,7 +636,7 @@ docker-compose up -d --build
 curl http://localhost:5000/api/health
 
 # Check container networking
-docker-compose ps
+docker compose ps
 docker network inspect pdf-processor-network
 ```
 
@@ -649,8 +649,8 @@ docker volume ls
 docker volume inspect pdfFDAValidator_pdf_uploads
 
 # Don't use -v flag when stopping
-docker-compose down  # Good
-docker-compose down -v  # Removes volumes!
+docker compose down  # Good
+docker compose down -v  # Removes volumes!
 ```
 
 **5. Port conflicts**

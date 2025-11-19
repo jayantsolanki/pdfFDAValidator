@@ -35,7 +35,7 @@ cd pdfFDAValidator
 
 2. **Start the application**
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 3. **Access the application**
@@ -50,12 +50,12 @@ The application is now running with:
 
 4. **Stop the application**
 ```bash
-docker-compose down
+docker compose down
 ```
 
 5. **Stop and remove all data**
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Configuration
@@ -217,7 +217,7 @@ The application uses Docker named volumes for data persistence:
 To completely reset the application and remove all data:
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Security Considerations
@@ -234,8 +234,8 @@ docker-compose down -v
 
 Check logs:
 ```bash
-docker-compose logs backend
-docker-compose logs frontend
+docker compose logs backend
+docker compose logs frontend
 ```
 
 ### Cannot upload files
@@ -246,13 +246,13 @@ docker-compose logs frontend
 
 ### API connection issues
 
-- Verify backend is running: `docker-compose ps`
+- Verify backend is running: `docker compose ps`
 - Check backend health: `curl http://localhost:5000/api/health`
 - Review nginx proxy configuration
 
 ### Data not persisting
 
-- Ensure you're not using `-v` flag when stopping: `docker-compose down` (not `down -v`)
+- Ensure you're not using `-v` flag when stopping: `docker compose down` (not `down -v`)
 - Check volume status: `docker volume ls`
 
 ## Production Deployment
