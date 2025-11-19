@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pdf-processor-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+    volumes:
+      # Persist uploaded and processed files
+      - pdf_uploads:/tmp/pdf_uploads
+      - pdf_processed:/tmp/pdf_processed
+    restart: unless-stopped
+
+  # Frontend React App with Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pdf-processor-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  # Named volumes for data persistence
+  pdf_uploads:
+    driver: local
+  pdf_processed:
+    driver: local
+
+networks:
+  default:
+    name: pdf-processor-network
